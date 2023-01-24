@@ -5,7 +5,7 @@ const pgSession = require("connect-pg-simple")(session)
 const { Pool } = require("pg")
 
 const databaseConnectionSettings = {
-    user: "postgres",
+    user: "muratirmak",
     password: "password",
     host: "localhost",
     port: "5432",
