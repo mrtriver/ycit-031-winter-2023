@@ -15,11 +15,18 @@ client.connect()
 
 const app = express()
 
+app.use((req, res, next) => {
+    console.log(
+        "hello, I am the very first middelware and I execute for all routes"
+    )
+    next()
+})
+
 app.use(express.json({ limit: 50000 }))
 
 // CRUD --- CREATE READ UPDATE DELETE  /pets
 
-app.delete("/pets/:id", async (req, res) => {
+async function getPetIdMiddleware(req, res, next) {
     const id = req.params.id
 
     if (!id) {
@@ -37,8 +44,16 @@ app.delete("/pets/:id", async (req, res) => {
         return
     }
 
+    res.locals.petId = id
+
+    next()
+}
+
+app.delete("/pets/:id", getPetIdMiddleware, async (req, res) => {
+    const id = req.params.id
+
     const deleteText = "DELETE FROM pets WHERE id = $1"
-    const deleteValues = [id]
+    const deleteValues = [req.params.id]
 
     try {
         const deleteResult = await client.query(deleteText, deleteValues)
@@ -51,60 +66,32 @@ app.delete("/pets/:id", async (req, res) => {
     }
 })
 
-app.patch("/pets/:id/increase-age-by-one", async (req, res) => {
-    const id = req.params.id
+app.patch(
+    "/pets/:id/increase-age-by-one",
+    getPetIdMiddleware,
+    async (req, res) => {
+        const updateText =
+            "UPDATE pets SET age = coalesce(age,0) + 1 WHERE id = $1"
+        const updateValues = [req.params.id]
+        console.log("updateValues", updateValues)
 
-    if (!id) {
-        res.status(400).json({ error: "missing id" })
-        return
+        try {
+            const updateResult = await client.query(updateText, updateValues)
+
+            console.log("updateResult", updateResult)
+
+            res.status(200).json(updateResult.rows)
+        } catch (err) {
+            res.status(400).json({ error: err.toString() })
+        }
     }
+)
 
-    const text = "SELECT * FROM pets WHERE id = $1;"
-    const values = [id]
-
-    const result = await client.query(text, values)
-
-    if (result.rows.length === 0) {
-        res.status(404).end()
-        return
-    }
-
-    const updateText = "UPDATE pets SET age = age + 1 WHERE id = $1"
-    const updateValues = [id]
-
-    try {
-        const updateResult = await client.query(updateText, updateValues)
-
-        console.log("updateResult", updateResult)
-
-        res.status(200).json(updateResult.rows)
-    } catch (err) {
-        res.status(400).json({ error: err.toString() })
-    }
-})
-
-app.put("/pets/:id", async (req, res) => {
-    const id = req.params.id
-
-    if (!id) {
-        res.status(400).json({ error: "missing id" })
-        return
-    }
-
-    const text = "SELECT * FROM pets WHERE id = $1;"
-    const values = [id]
-
-    const result = await client.query(text, values)
-
-    if (result.rows.length === 0) {
-        res.status(404).end()
-        return
-    }
-
+app.put("/pets/:id", getPetIdMiddleware, async (req, res) => {
     const pet = req.body
     const updateText =
         "UPDATE pets SET name = $2, species = $3, breed = $4, age = $5, weight = $6 WHERE id = $1"
-    const updateValues = [id, pet.name, pet.species, pet.breed, pet.age, pet.weight] // prettier-ignore
+    const updateValues = [req.params.id, pet.name, pet.species, pet.breed, pet.age, pet.weight] // prettier-ignore
 
     try {
         const updateResult = await client.query(updateText, updateValues)
