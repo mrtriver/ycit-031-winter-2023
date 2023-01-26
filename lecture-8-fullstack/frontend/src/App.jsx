@@ -13,8 +13,8 @@ export function App() {
     const [data, setData] = useState([])
 
     useEffect(() => {
-        fetch("http://127.0.0.1:3333/pets", {
-            credentials: "include",
+        fetch("http://localhost:3333/pets", {
+            credentials: "include", // This is needed to send the session ID cookie to the server (if there is one)
         })
             .then((res) => {
                 return res.json()
@@ -42,7 +42,7 @@ export function App() {
                 username: registerUsername,
                 password: registerPassword,
             }),
-            credentials: "include",
+            credentials: "include", // This is needed in POST requests so that the browser sets the cookie into the browser
             headers: {
                 "Content-Type": "application/json",
             },

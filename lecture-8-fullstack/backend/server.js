@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 })
 
 app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:8081")
+    res.setHeader("Access-Control-Allow-Origin", "http://localhost:8081")
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
     res.setHeader("Access-Control-Allow-Headers", "Content-Type")
     res.setHeader("Access-Control-Allow-Credentials", "true")
@@ -40,12 +40,15 @@ app.use(
         secret: "this-is-a-secretsaof3498thwevniut23hfuiehdghwiughdkjfhksdjhfkj7", // secret key to encrypt the session data
         resave: false, // don't save the session if it hasn't been modified
         saveUninitialized: false, // don't create a session until the user has logged in
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 30 days
+        cookie: {
+            httpOnly: false, // Use this to make the cookie inaccessible via javascript running in the browser
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+        },
     })
 )
 
 app.use((req, res, next) => {
-    console.log("userId", req.session.userId)
+    console.log("session user", req.session.user)
 
     next()
 })
@@ -92,7 +95,7 @@ app.post("/register", async (req, res) => {
 
         const selectResult = await db.query(selectText, selectValues)
 
-        console.log("selectResult", selectResult)
+        // console.log("selectResult", selectResult)
 
         if (selectResult.rowCount > 0) {
             res.status(400).send("user with that username already exists")
@@ -103,9 +106,13 @@ app.post("/register", async (req, res) => {
         const insertValues = [req.body.username, req.body.password]
         const insertResult = await db.query(insertText, insertValues)
 
-        console.log("result", insertResult)
+        const user = {
+            id: insertResult.rows[0].id,
+        }
 
-        req.session.userId = insertResult.rows[0].id
+        console.log("storing user context into the session", user)
+
+        req.session.user = user
 
         res.status(200).end()
     } catch (error) {
