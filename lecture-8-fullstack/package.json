@@ -1,0 +1,22 @@
+{
+    "name": "lecture-8-fullstack",
+    "version": "1.0.0",
+    "description": "",
+    "private": true,
+    "workspaces":  [
+        "backend",
+        "frontend"
+    ],
+    "scripts": {
+        "dev:back": "cd backend && npm run dev",
+        "dev:front": "cd frontend && npm run dev",
+        "dev": "npm-run-all --parallel dev:back dev:front",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "npm-run-all": "^4.1.5"
+    }
+}
